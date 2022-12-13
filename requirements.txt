@@ -3,8 +3,12 @@ pandas
 streamlit
 plotly.express
 pydeck
-sklearn.model_selection
-xgboost
+train_test_split
+StandardScaler
+mean_squared_error
+model_selection
+XGBRegressor
+RandomForestRegressor
 
 
 
