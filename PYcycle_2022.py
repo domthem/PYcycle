@@ -34,7 +34,7 @@ df_calendrier=pd.read_csv("data_calendrier.csv",sep=";")
 df_calendrier["Date"]=pd.to_datetime(df_calendrier["Date"])
 df_calendrier["Date"]=df_calendrier["Date"].apply(lambda x:x.date())
 
-df_meteo=pd.read_csv(r"C:\projet_velib\streamlit_pycycle\data_meteo.csv",sep=";")
+df_meteo=pd.read_csv("data_meteo.csv",sep=";")
 df_meteo["Date"]=pd.to_datetime(df_meteo["Date"])
 df_meteo["Date"]=df_meteo["Date"].apply(lambda x:x.date())
 soleil1=df_meteo["Ensoleillement"].apply(lambda x: x.split("h")[0]).astype('int')
