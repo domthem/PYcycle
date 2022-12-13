@@ -4,6 +4,7 @@ pandas
 streamlit
 plotly.express
 pydeck
-from datetime import date
+datetime 
+date
 
 
