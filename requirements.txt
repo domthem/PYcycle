@@ -4,6 +4,7 @@ streamlit
 plotly.express
 pydeck
 scikit-learn
+xgboost
 
 
 
