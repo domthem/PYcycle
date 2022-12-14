@@ -3,12 +3,7 @@ pandas
 streamlit
 plotly.express
 pydeck
-train_test_split
-StandardScaler
-sklearn.metrics
-model_selection
-xgboost
-sklearn.ensemble
+scikit-learn
 
 
 
