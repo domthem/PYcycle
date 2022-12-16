@@ -607,14 +607,14 @@ elif page==pages[4]:
     col1,col2,col3=st.columns([2, 1, 4])
     with col1:
         option1=st.selectbox(
-        "Semaine/jour/heure",    
-        ("comptage par semaine","comptage par jour","comptage par heure"),
+        "Comptage par semaine/jour/heure",    
+        ("semaine","jour","heure"),
         )
         option2=st.selectbox(
         "RandomForest/XGBoost",
         ("RandomForestRegressor","XGBoostRegressor"),
         )
-        if option1=="comptage par heure":
+        if option1=="heure":
             periode="H"
             if option2=="XGBoostRegressor":
                 scortrain=scores["xgbr_H"][0]
@@ -635,7 +635,7 @@ elif page==pages[4]:
                 y_test=df_H_rfr_test["reel"]
                 predtest=df_H_rfr_test["pred"]
                 df_H_moy=df_H_rfr_moy
-        elif option1=="comptage par jour":
+        elif option1=="jour":
             periode="J"
             if option2=="XGBoostRegressor":
                 scortrain=scores["xgbr_J"][0]
@@ -658,7 +658,7 @@ elif page==pages[4]:
                 predtest=df_J_rfr_test["pred"]
                 df_J=df_J_rfr
                 
-        elif option1=="comptage par semaine":
+        elif option1=="semaine":
             periode="S"
             if option2=="XGBoostRegressor":
                 scortrain=scores["xgbr_S"][0]
