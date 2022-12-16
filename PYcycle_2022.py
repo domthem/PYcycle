@@ -280,7 +280,7 @@ elif page==pages[1]:
         fig = px.bar(data_frame= infos_compteurs.tail(5),x="Comptage_moyen",y="Nom_compteur",
             labels={'Comptage_moyen':'Comptage moyen', 'Nom_compteur':'Compteurs'},
             title = "Les 5 compteurs les plus fréquentés",
-            width=600, height=400,
+            width=500, height=300,
             color_discrete_sequence=["sandybrown"],
                  )
         st.plotly_chart(fig)
@@ -290,7 +290,7 @@ elif page==pages[1]:
         fig = px.bar(data_frame= infos_compteurs.head(5),x="Comptage_moyen",y="Nom_compteur",
             labels={'Comptage_moyen':'Comptage moyen', 'Nom_compteur':'Compteurs'},
             title = "Les 5 compteurs les moins fréquentés",
-            width=600, height=400,
+            width=500, height=300,
             color_discrete_sequence=["yellowgreen"],
                  )
         st.plotly_chart(fig)    
@@ -604,7 +604,7 @@ elif page==pages[4]:
     st.markdown(new_title, unsafe_allow_html=True)
     
  
-    col1,col2,col3=st.columns([3, 1, 3])
+    col1,col2=st.columns([2, 4])
     with col1:
         option1=st.selectbox(
         "Semaine/jour/heure",    
@@ -686,7 +686,7 @@ elif page==pages[4]:
         st.write("rmse train=",rmsetrain.round(2))
         st.write("rmse test=",rmsetest.round(2))
     
-    with col3:
+    with col2:
     #tableau des importances
      st.write("Les 10 variables les plus importantes dans la modélisation choisie  sont :\n")
      st.dataframe(df_variables_importantes)
