@@ -688,7 +688,7 @@ elif page==pages[4]:
     
     with col2:
     #tableau des importances
-     st.write("Les 10 variables les plus importantes dans la modélisation choisie  sont :\n")
+     st.write("Les 10 variables les plus importantes sont :")
      st.dataframe(df_variables_importantes)
      
     fig=px.scatter(
