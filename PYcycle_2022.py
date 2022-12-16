@@ -606,9 +606,10 @@ elif page==pages[4]:
  
     col1,col2=st.columns([2, 4])
     with col1:
+        st.write("\n")
         option1=st.selectbox(
         "Semaine/jour/heure",    
-        ("comptage moyen par semaine","comptage moyen par jour","comptage par heure"),
+        ("comptage par semaine","comptage par jour","comptage par heure"),
         )
         option2=st.selectbox(
         "RandomForest/XGBoost",
