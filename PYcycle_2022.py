@@ -604,7 +604,7 @@ elif page==pages[4]:
     st.markdown(new_title, unsafe_allow_html=True)
     
  
-    col1,col2,col3=st.columns([3, 1, 3])
+    col1,col2,col3=st.columns([2, 1, 4])
     with col1:
         option1=st.selectbox(
         "Semaine/jour/heure",    
@@ -635,7 +635,7 @@ elif page==pages[4]:
                 y_test=df_H_rfr_test["reel"]
                 predtest=df_H_rfr_test["pred"]
                 df_H_moy=df_H_rfr_moy
-        elif option1=="comptage moyen par jour":
+        elif option1=="comptage par jour":
             periode="J"
             if option2=="XGBoostRegressor":
                 scortrain=scores["xgbr_J"][0]
@@ -658,7 +658,7 @@ elif page==pages[4]:
                 predtest=df_J_rfr_test["pred"]
                 df_J=df_J_rfr
                 
-        elif option1=="comptage moyen par semaine":
+        elif option1=="comptage par semaine":
             periode="S"
             if option2=="XGBoostRegressor":
                 scortrain=scores["xgbr_S"][0]
