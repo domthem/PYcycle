@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Version du 15/12/2022 pour streamlit sharing
-Les modèles ne sont plus en direct mais remplacés
-par les fichiers de résultats issus du programme original
-( cf PYcycle_2022_original)
+Script partie modélisation du projet PYcycle Novembre 2022
+1-carte
+2-modèles avec utilisation de joblib
 """
 
 
@@ -99,37 +98,71 @@ for i in infos_compteurs.index:
         
         
 #Péparation des modélisations
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error
+from sklearn import model_selection
+from xgboost import XGBRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 
-#lecture des résuktats des modèles
-scores=pd.read_csv("scores.csv",sep=",")
+from joblib import Memory
+location = './cachedir'
+memory = Memory(location, verbose=0)
 
-df_S_rfr_variables=pd.read_csv("df_S_rfr_variables.csv",sep=",",index_col=0)
-df_S_xgbr_variables=pd.read_csv("df_S_xgbr_variables.csv",sep=",",index_col=0)
-df_J_rfr_variables=pd.read_csv("df_J_rfr_variables.csv",sep=",",index_col=0)
-df_J_xgbr_variables=pd.read_csv("df_J_xgbr_variables.csv",sep=",",index_col=0)
-df_H_rfr_variables=pd.read_csv("df_H_rfr_variables.csv",sep=",",index_col=0)
-df_H_xgbr_variables=pd.read_csv("df_H_xgbr_variables.csv",sep=",",index_col=0)
+def model_xgbr1(X,y):
+    xgbr = XGBRegressor()
+    xgbr.fit(X, y)
+    return xgbr
 
+model_xgbr1=memory.cache(model_xgbr1)
 
-df_S_rfr_test=pd.read_csv("df_S_rfr_test.csv",sep=",")
-df_S_xgbr_test=pd.read_csv("df_S_xgbr_test.csv",sep=",")
-df_J_rfr_test=pd.read_csv("df_J_rfr_test.csv",sep=",")
-df_J_xgbr_test=pd.read_csv("df_J_xgbr_test.csv",sep=",")
-df_H_rfr_test=pd.read_csv("df_H_rfr_test.csv",sep=",")
-df_H_xgbr_test=pd.read_csv("df_H_xgbr_test.csv",sep=",")
+def model_xgbr2(X,y):
+    #Jeu de paramètres testés
+    parametres={"n_estimators":[50,100,500],"max_depth":[4,6,8],'learning_rate': [ 0.1,0.3,0.5]}
 
-df_S_rfr=pd.read_csv("df_S_rfr.csv",sep=",")
-df_S_xgbr=pd.read_csv("df_S_xgbr.csv",sep=",")
-df_J_rfr=pd.read_csv("df_J_rfr.csv",sep=",")
-df_J_xgbr=pd.read_csv("df_J_xgbr.csv",sep=",")
-df_H_rfr_moy=pd.read_csv("df_H_rfr_moy.csv",sep=",")
-df_H_xgbr_moy=pd.read_csv("df_H_xgbr_moy.csv",sep=",")
+    xgbr=XGBRegressor()
+    grid_xgbr=model_selection.GridSearchCV(estimator=xgbr,param_grid=parametres,cv=2)
+    grid_xgbr.fit(X,y)
+    
+    learnrate=grid_xgbr.best_params_["learning_rate"]
+    nbest=grid_xgbr.best_params_["n_estimators"]
+    maxdepth=grid_xgbr.best_params_["max_depth"]
+    xgbr_grid=XGBRegressor(learning_rate=learnrate,n_estimators=nbest,max_depth=maxdepth)
+    xgbr_grid.fit(X,y)
+    return xgbr_grid
+
+model_xgbr2=memory.cache(model_xgbr2)
+
+def model_rfr1(X,y):
+    rfr = RandomForestRegressor()
+    rfr.fit(X, y)
+    return(rfr)
+
+model_rfr1=memory.cache(model_rfr1)
+
+def model_rfr2(X,y):
+    parametres={"n_estimators":[100,200,500],"max_depth":[6,8,10],"criterion":['mse','poisson']}
+
+    rfr=RandomForestRegressor()
+    grid_rfr=model_selection.GridSearchCV(estimator=rfr,param_grid=parametres,cv=2)
+    grid_rfr.fit(X,y)
+    
+    crit=grid_rfr.best_params_["criterion"]
+    nbest=grid_rfr.best_params_["n_estimators"]
+    maxdepth=grid_rfr.best_params_["max_depth"]
+
+    rfr_grid=RandomForestRegressor(criterion=crit,n_estimators=nbest,max_depth=maxdepth)
+    rfr_grid.fit(X,y)
+    return rfr_grid
+
+model_rfr2=memory.cache(model_rfr2)
+
 
 #début de la présentation streamlit
 
 st.sidebar.title("Projet PYcycle 2022")
-pages=["Présentation","Carte des compteurs","Dataviz-Variables spatiales","Dataviz-Variables temporelles","Modélisation","Conclusions"]
+pages=["Introduction","Carte des compteurs","Dataviz-Variables spatiales","Dataviz-Variables temporelles","Modélisation","Conclusions"]
 page=st.sidebar.radio("Aller vers", pages)
 
 #période suivie
@@ -140,21 +173,12 @@ for i in periode.index:
 periode=periode.drop_duplicates(subset=["date"],keep="first").reset_index(drop=True)
 datemin=periode["date"].min()
 datemax=periode["date"].max()
-
 if page==pages[0]:
-    new_title = '<p style="font-family:sans-serif; color:cornflowerblue; font-size: 15px;"><b>Projet fil rouge mené dans le cadre de la formation Data Analyst - avril 2022 en continu de Datascientest  -  Auteurs :C.Dreneau-E.Tchoué-D.Thémines</b></p>'
-    st.markdown(new_title, unsafe_allow_html=True)
-    st.markdown("""
-            https://formation.datascientest.com/    
-                """, unsafe_allow_html=True)
-   
-    st.write("\n")
-    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 17px;"><b>Présentation du projet</b></p>'
+    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 22px;"><b>Introduction</b></p>'
     st.markdown(new_title, unsafe_allow_html=True)
     
     texte0 = '<p style="font-family:sans-serif; color:DarkBlue; font-size: 15px;"><b>Contexte</b></p>'
     st.markdown(texte0, unsafe_allow_html=True)
-    
     col1,col2=st.columns([6,4])
     with col1:
         st.write("\n")
@@ -207,7 +231,7 @@ if page==pages[0]:
        
        
 elif page==pages[1]:
-    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 17px;"><b>Carte des compteurs</b></p>'
+    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 22px;"><b>Carte des compteurs</b></p>'
     st.markdown(new_title, unsafe_allow_html=True)
     
     st.markdown("""
@@ -296,7 +320,7 @@ elif page==pages[1]:
         st.plotly_chart(fig)    
         
 elif page==pages[2]:
-    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 17px;"><b>Variables spatiales</b></p>'
+    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 22px;"><b>Variables spatiales</b></p>'
     st.markdown(new_title, unsafe_allow_html=True)
     st.markdown("""
                
@@ -415,7 +439,7 @@ Plus on est proche d'une station de métro, plus la fréquentation cycliste est 
 #FIN DE MODIF
 
 elif page==pages[3]:
-    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 17px;"><b>Variables temporelles</b></p>'
+    new_title = '<p style="font-family:sans-serif; color:Green; font-size: 22px;"><b>Variables temporelles</b></p>'
     st.markdown(new_title, unsafe_allow_html=True)
     st.write("\n")
     st.markdown("""
@@ -585,7 +609,7 @@ La fréquentation commence à baisser dès le vendredi pour atteindre son niveau
     
 elif page==pages[4]:
 
-    titre = '<p style="font-family:sans-serif; color:Green; font-size: 17px;"><b>Modélisation</b></p>'
+    titre = '<p style="font-family:sans-serif; color:Green; font-size: 22px;"><b>Modélisation</b></p>'
     st.markdown(titre, unsafe_allow_html=True)
     
     new_title = '<p style="font-family:sans-serif; color:DarkBlue; font-size: 15px;"><b>Conditions des modélisations</b></p>'
@@ -602,8 +626,6 @@ elif page==pages[4]:
              
     new_title = '<p style="font-family:sans-serif; color:DarkBlue; font-size: 15px;"><b>Résultats des modélisations</b></p>'
     st.markdown(new_title, unsafe_allow_html=True)
-    
- 
     col1,col2,col3=st.columns([3, 1, 3])
     with col1:
         option1=st.selectbox(
@@ -615,82 +637,70 @@ elif page==pages[4]:
         ("RandomForestRegressor","XGBoostRegressor"),
         )
         if option1=="comptage par heure":
+            target=velo_H["Comptage_horaire"]
+            data=velo_H.drop(["Comptage_horaire","Arrondissement","Nomjour_comptage"],axis=1)
             periode="H"
-            if option2=="XGBoostRegressor":
-                scortrain=scores["xgbr_H"][0]
-                scortest=scores["xgbr_H"][1]
-                rmsetrain=scores["xgbr_H"][2]
-                rmsetest=scores["xgbr_H"][3]
-                df_variables_importantes=df_H_xgbr_variables
-                y_test=df_H_xgbr_test["reel"]
-                predtest=df_H_xgbr_test["pred"]
-                df_H_moy=df_H_xgbr_moy
-            
-            elif option2=="RandomForestRegressor":
-                scortrain=scores["rfr_H"][0]
-                scortest=scores["rfr_H"][1]
-                rmsetrain=scores["rfr_H"][2]
-                rmsetest=scores["rfr_H"][3]    
-                df_variables_importantes=df_H_rfr_variables
-                y_test=df_H_rfr_test["reel"]
-                predtest=df_H_rfr_test["pred"]
-                df_H_moy=df_H_rfr_moy
+        
         elif option1=="comptage moyen par jour":
+            target=velo_J["Comptage_horaire"]
+            data=velo_J.drop("Comptage_horaire",axis=1)
             periode="J"
-            if option2=="XGBoostRegressor":
-                scortrain=scores["xgbr_J"][0]
-                scortest=scores["xgbr_J"][1]
-                rmsetrain=scores["xgbr_J"][2]
-                rmsetest=scores["xgbr_J"][3]
-                df_variables_importantes=df_J_xgbr_variables
-                y_test=df_J_xgbr_test["reel"]
-                predtest=df_J_xgbr_test["pred"]
-                df_J=df_J_xgbr
-            
-            
-            elif option2=="RandomForestRegressor":
-                scortrain=scores["rfr_J"][0]
-                scortest=scores["rfr_J"][1]
-                rmsetrain=scores["rfr_J"][2]
-                rmsetest=scores["rfr_J"][3]    
-                df_variables_importantes=df_J_rfr_variables
-                y_test=df_J_rfr_test["reel"]
-                predtest=df_J_rfr_test["pred"]
-                df_J=df_J_rfr
-                
+       
         elif option1=="comptage moyen par semaine":
+            target=velo_S["Comptage_horaire"]
+            data=velo_S.drop("Comptage_horaire",axis=1) 
             periode="S"
-            if option2=="XGBoostRegressor":
-                scortrain=scores["xgbr_S"][0]
-                scortest=scores["xgbr_S"][1]
-                rmsetrain=scores["xgbr_S"][2]
-                rmsetest=scores["xgbr_S"][3]
-                df_variables_importantes=df_S_xgbr_variables
-                y_test=df_S_xgbr_test["reel"]
-                predtest=df_S_xgbr_test["pred"]
-                df_S=df_S_xgbr
-            
-            elif option2=="RandomForestRegressor":
-               scortrain=scores["rfr_S"][0]
-               scortest=scores["rfr_S"][1]
-               rmsetrain=scores["rfr_S"][2]
-               rmsetest=scores["rfr_S"][3]    
-               df_variables_importantes=df_S_rfr_variables
-               y_test=df_S_rfr_test["reel"]
-               predtest=df_S_rfr_test["pred"]
-               df_S=df_S_rfr
-      #Résultas métriques et graphes
+       
+       
+       #Séparation   
+        X_train,X_test,y_train,y_test=train_test_split(data,target,test_size=0.2,shuffle=False)
+        scal=StandardScaler()
+        X_train_scal=scal.fit_transform(X_train)
+        X_test_scal=scal.transform(X_test)
+    
+        if option2=="XGBoostRegressor":
+            modele_choisi="XGBoostRegressor"
+            if periode=="J" or periode=="S":
+                modele=model_xgbr2(X_train_scal,y_train)
+            elif periode=="H":
+                modele=model_xgbr1(X_train_scal,y_train)
+        
+        elif option2=="RandomForestRegressor":
+            modele_choisi="RandomForestRegressor"
+            if periode=="J" or periode=="S":
+                modele=model_rfr2(X_train_scal,y_train)
+            elif periode=="H":
+                modele=model_rfr1(X_train_scal,y_train)  
+   
+    
+
+    #Résultas métriques et graphes
         st.write("Métriques du modèle:")
-        st.write("scoretrain =",scortrain.round(2))
-        st.write("scoretest =",scortest.round(2))
+        st.write("scoretrain =",modele.score(X_train_scal,y_train).round(2))
+        st.write("scoretest =",modele.score(X_test_scal,y_test).round(2))
+        predtrain=modele.predict(X_train_scal)
+        predtest=modele.predict(X_test_scal)
+        rmsetrain=np.sqrt(mean_squared_error(y_train,predtrain))
+        rmsetest=np.sqrt(mean_squared_error(y_test,predtest))
         st.write("rmse train=",rmsetrain.round(2))
         st.write("rmse test=",rmsetest.round(2))
-    
+
     with col3:
     #tableau des importances
-     st.write("Les 10 variables les plus importantes dans la modélisation choisie  sont :\n")
-     st.dataframe(df_variables_importantes)
-     
+        importances=list(modele.feature_importances_)
+        variables=list(data.columns)
+        
+        st.write("Les 10 variables les plus importantes dans la modélisation choisie  sont :\n")
+        df_variables=pd.DataFrame({"Variable": variables,"Importance": importances})
+        df_variables["Importance"]=df_variables["Importance"].apply(lambda x :np.round(x,decimals=4))
+        df_variables=df_variables.sort_values(by="Importance",ascending=False)
+        df_variables_importantes=df_variables[df_variables["Importance"]>=0.005].reset_index(drop=True)
+        st.dataframe(df_variables_importantes.head(10))
+        
+    #  Graphe predictions vs test
+    st.write("\n\n")
+    
+#DEBUT MODIF    
     fig=px.scatter(
         x=y_test,y=predtest,
         trendline="ols",
@@ -699,16 +709,34 @@ elif page==pages[4]:
         labels=dict(x="Valeurs réelles", y="Valeurs prédites"),
         )
     st.plotly_chart(fig)
-
-    if periode=="H":
-        
+#FIN MODIF    
+     
+    if periode=="H" :
+        #création du dataframe de représentation
+        df_H_train=X_train[['An_comptage', 'Nummois_comptage','Numjourmois_comptage','Heure_comptage']]
+        df_H_train["y_train"]=y_train  
+        df_H_train["pred_train"]=predtrain
+        df_H_test=X_test[['An_comptage', 'Nummois_comptage','Numjourmois_comptage','Heure_comptage']]
+        df_H_test["y_test"]=y_test 
+        df_H_test["pred_test"]=predtest
+        df_H=pd.concat([df_H_train,df_H_test],axis=0)
+                
         #on recalcule la date sur chaque tranche --> 3 tranches plus rapide que sur l'ensemble
         #graphique pour le comptage à 7h
-        
+        df_H_moy=df_H.groupby(by=['An_comptage', 'Nummois_comptage','Numjourmois_comptage',"Heure_comptage"],as_index=False).agg({"y_train":"mean","y_test":"mean","pred_train":"mean","pred_test":"mean"})
         df_H_7=df_H_moy[df_H_moy["Heure_comptage"]==7].reset_index(drop=True)
         df_H_12=df_H_moy[df_H_moy["Heure_comptage"]==12].reset_index(drop=True)
         df_H_17=df_H_moy[df_H_moy["Heure_comptage"]==17].reset_index(drop=True)
-    
+        df_H_7["Date"]=df_H_7["An_comptage"]
+        df_H_12["Date"]=df_H_12["An_comptage"]
+        df_H_17["Date"]=df_H_17["An_comptage"]
+        for i in df_H_7.index:
+            df_H_7["Date"][i]=date(df_H_7["An_comptage"][i], df_H_7["Nummois_comptage"][i],df_H_7["Numjourmois_comptage"][i])
+        for i in df_H_12.index:
+            df_H_12["Date"][i]=date(df_H_12["An_comptage"][i], df_H_12["Nummois_comptage"][i],df_H_12["Numjourmois_comptage"][i])
+        for i in df_H_7.index:
+            df_H_17["Date"][i]=date(df_H_17["An_comptage"][i], df_H_17["Nummois_comptage"][i],df_H_17["Numjourmois_comptage"][i])
+        
         fig = px.line(        
             df_H_7, #Data Frame
             x = "Date", #Columns from the data frame
@@ -765,16 +793,29 @@ elif page==pages[4]:
         )
         st.plotly_chart(fig)
     
-        #graphique pour le comptage à 12h
-       
-     #Graphes supplémentaire pour jour et semaine
+    
+    
+    #Graphes supplémentaire pour jour et semaine
     latmax= 48.87756
     lngmax= 2.35535
     latmoy= 48.869831  
     lngmoy= 2.307076
     
-    if periode=="J":
-                
+    if periode=="J" :
+        #création du dataframe de représentation
+        df_J_train=X_train[['An_comptage', 'Nummois_comptage','Numjourmois_comptage','lat','lng']]
+        df_J_train["y_train"]=y_train  
+        df_J_train["pred_train"]=predtrain
+        df_J_test=X_test[['An_comptage', 'Nummois_comptage','Numjourmois_comptage','lat','lng']]
+        df_J_test["y_test"]=y_test 
+        df_J_test["pred_test"]=predtest
+        df_J=pd.concat([df_J_train,df_J_test],axis=0)
+        df_J["Date"]=df_J["An_comptage"]
+        for i in df_J.index:
+            df_J["Date"][i]=date(df_J["An_comptage"][i], df_J["Nummois_comptage"][i],df_J["Numjourmois_comptage"][i])
+        
+        df_J=df_J.drop(["An_comptage","Nummois_comptage","Numjourmois_comptage"],axis=1)        
+        
         #graphique pour la moyenne de compteurs
         df_J_moy=df_J.groupby(by=["Date"],as_index=False).agg({"y_train":"mean","y_test":"mean","pred_train":"mean","pred_test":"mean"})
        
@@ -835,8 +876,19 @@ elif page==pages[4]:
         )
         st.plotly_chart(fig)
         
-    if periode=="S":
-        
+    if periode=="S" :
+        #création du dataframe de représentation
+        #velo_S['An_comptage']*100+velo_S['Semaine_comptage']
+        df_S_train=X_train[['An_semaine','lat','lng','An_comptage','Semaine_comptage']]
+        df_S_train["y_train"]=y_train  
+        df_S_train["pred_train"]=predtrain
+        df_S_test=X_test[[ 'An_semaine','lat','lng','An_comptage','Semaine_comptage']]
+        df_S_test["y_test"]=y_test 
+        df_S_test["pred_test"]=predtest
+        df_S=pd.concat([df_S_train,df_S_test],axis=0)
+        df_S["Semaine"]=df_S["An_comptage"].astype("str")+" S"+df_S["Semaine_comptage"].astype("str")
+        df_S=df_S.sort_values(by="An_semaine",ascending=True).reset_index(drop=True) 
+    
         #graphique pour la moyenne de compteurs
         df_S_moy=df_S.groupby(by=["An_semaine","Semaine"],as_index=False).agg({"y_train":"mean","y_test":"mean","pred_train":"mean","pred_test":"mean"})
         
@@ -858,7 +910,11 @@ elif page==pages[4]:
         st.plotly_chart(fig)
         
         #graphique pour le compteur le plus fréquenté 89 Bld de Magenta NO-SE
-        df_S_max=df_S[(df_S["lat"]==latmax)&(df_S["lng"]==lngmax)]
+        df_S_train_max=df_S_train[(df_S_train["lat"]==latmax)&(df_S_train["lng"]==lngmax)]
+        df_S_test_max=df_S_test[(df_S_test["lat"]==latmax)&(df_S_test["lng"]==lngmax)]
+        df_S_max=pd.concat([df_S_train_max,df_S_test_max],axis=0)
+        df_S_max=df_S_max.sort_values(by="An_semaine",ascending=True).reset_index(drop=True)
+        df_S_max["Semaine"]=df_S_max["An_comptage"].astype("str")+" S"+df_S_max["Semaine_comptage"].astype("str")
         
         fig = px.line(        
             df_S_max, #Data Frame
@@ -878,8 +934,12 @@ elif page==pages[4]:
         st.plotly_chart(fig)
         
         #graphique pour le compteur 33 avenue des Champs Elysées NO-SE
-        df_S_33=df_S[(df_S["lat"]==latmoy)&(df_S["lng"]==lngmoy)]
-                
+        df_S_train_33=df_S_train[(df_S_train["lat"]==latmoy)&(df_S_train["lng"]==lngmoy)]
+        df_S_test_33=df_S_test[(df_S_test["lat"]==latmoy)&(df_S_test["lng"]==lngmoy)]
+        df_S_33=pd.concat([df_S_train_33,df_S_test_33],axis=0)
+        df_S_33=df_S_33.sort_values(by="An_semaine",ascending=True).reset_index(drop=True)
+        df_S_33["Semaine"]=df_S_33["An_comptage"].astype("str")+" S"+df_S_33["Semaine_comptage"].astype("str")
+        
         fig = px.line(        
             df_S_33, #Data Frame
             x = "Semaine", #Columns from the data frame
@@ -896,11 +956,9 @@ elif page==pages[4]:
             
         )
         st.plotly_chart(fig)
-       
-            
     
 elif page==pages[5]:
-    titre = '<p style="font-family:sans-serif; color:Green; font-size: 17px;"><b>Conclusions</b></p>'
+    titre = '<p style="font-family:sans-serif; color:Green; font-size: 22px;"><b>Conclusions</b></p>'
     st.markdown(titre, unsafe_allow_html=True)
     texte1 = '<p style="font-family:sans-serif; color:DarkBlue; font-size: 15px;"><b>Synthèse des principaux résultats</b></p>'
     st.markdown(texte1, unsafe_allow_html=True)
