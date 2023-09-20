@@ -1,5 +1,5 @@
 # PYcycle
-Projet dans le cadre de la formation DataScientest DA_Avril2022_continue
+Projet fil rouge réalisé dans le cadre de la formation DataScientest DA_Avril2022_continue
 Co-auteurs : C.Dreneau , E.Tchoué , D.Thémines
 
 Il s'agit d'aanlyser et de modéliser la fréquentation cycliste , mesurée par des compteurs positionnés dans certaines stations velib ( cf Id_compteur , Nom_compteur et lat/lng).
